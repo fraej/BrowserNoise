@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Noise Generator with Filter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .control-group {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        h2 {
+            color: #00ff9d;
+            margin-top: 0;
+        }
+
+        .slider-wrapper {
+            margin: 15px 0;
+        }
+
+        .slider {
+            width: 100%;
+            margin: 10px 0;
+            -webkit-appearance: none;
+            height: 4px;
+            background: #444;
+            border-radius: 2px;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            background: #00ff9d;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        label {
+            display: block;
+            color: #00ff9d;
+            margin-bottom: 5px;
+        }
+
+        select {
+            background: #333;
+            color: #fff;
+            padding: 8px;
+            border: 1px solid #00ff9d;
+            border-radius: 4px;
+            width: 200px;
+        }
+
+        button {
+            background: #00ff9d;
+            color: #1a1a1a;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background: #00cc7d;
+        }
+
+        .active {
+            background: #ff0066;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Noise Generator with Filter</h1>
+
+        <!-- Noise Controls -->
+        <div class="control-group">
+            <h2>Noise Generator</h2>
+            <div>
+                <label>Noise Type</label>
+                <select id="noiseType">
+                    <option value="white">White</option>
+                    <option value="pink">Pink</option>
+                    <option value="brown">Brown</option>
+                </select>
+            </div>
+            <div class="slider-wrapper">
+                <label>Volume</label>
+                <input type="range" id="noiseVolume" class="slider" min="-60" max="0" value="-20">
+                <span id="volumeValue">-20 dB</span>
+            </div>
+            <button id="noiseToggle">Start Noise</button>
+        </div>
+
+        <!-- Filter Controls -->
+        <div class="control-group">
+            <h2>Filter</h2>
+            <div>
+                <label>Filter Type</label>
+                <select id="filterType">
+                    <option value="lowpass">Lowpass</option>
+                    <option value="highpass">Highpass</option>
+                    <option value="bandpass">Bandpass</option>
+                    <option value="notch">Notch</option>
+                </select>
+            </div>
+            <div class="slider-wrapper">
+                <label>Frequency</label>
+                <input type="range" id="filterFreq" class="slider" min="20" max="20000" value="1000">
+                <span id="freqValue">1000 Hz</span>
+            </div>
+            <div class="slider-wrapper">
+                <label>Resonance (Q)</label>
+                <input type="range" id="filterQ" class="slider" min="0" max="20" step="0.1" value="1">
+                <span id="qValue">1.0</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize audio components
+        const noise = new Tone.Noise("white").start();
+        const filter = new Tone.Filter({
+            type: "lowpass",
+            frequency: 1000,
+            Q: 1
+        });
+        const volume = new Tone.Volume(-20);
+
+        // Connect components
+        noise.chain(filter, volume, Tone.Destination);
+        noise.stop(); // Initially stopped
+
+        // UI Controls
+        const noiseToggle = document.getElementById('noiseToggle');
+        let isPlaying = false;
+
+        // Noise Type Control
+        document.getElementById('noiseType').addEventListener('change', e => {
+            const currentState = noise.state;
+            noise.stop();
+            noise.type = e.target.value;
+            if (currentState === 'started') {
+                noise.start();
+            }
+        });
+
+        // Volume Control
+        document.getElementById('noiseVolume').addEventListener('input', e => {
+            const value = parseFloat(e.target.value);
+            volume.volume.value = value;
+            document.getElementById('volumeValue').textContent = `${value.toFixed(1)} dB`;
+        });
+
+        // Filter Type Control
+        document.getElementById('filterType').addEventListener('change', e => {
+            filter.type = e.target.value;
+        });
+
+        // Filter Frequency Control
+        document.getElementById('filterFreq').addEventListener('input', e => {
+            const value = parseFloat(e.target.value);
+            filter.frequency.value = value;
+            document.getElementById('freqValue').textContent = `${value.toFixed(0)} Hz`;
+        });
+
+        // Filter Q Control
+        document.getElementById('filterQ').addEventListener('input', e => {
+            const value = parseFloat(e.target.value);
+            filter.Q.value = value;
+            document.getElementById('qValue').textContent = value.toFixed(1);
+        });
+
+        // Noise Toggle
+        noiseToggle.addEventListener('click', async () => {
+            // Start audio context if needed
+            await Tone.start();
+
+            if (isPlaying) {
+                noise.stop();
+                noiseToggle.textContent = 'Start Noise';
+                noiseToggle.classList.remove('active');
+            } else {
+                noise.start();
+                noiseToggle.textContent = 'Stop Noise';
+                noiseToggle.classList.add('active');
+            }
+            isPlaying = !isPlaying;
+        });
+
+        // Log scale conversion for frequency slider
+        document.getElementById('filterFreq').addEventListener('input', function (e) {
+            const min = Math.log(20);
+            const max = Math.log(20000);
+            const scale = (max - min) / (100 - 0);
+            const value = Math.exp(min + scale * (e.target.value - 0));
+            filter.frequency.value = value;
+            document.getElementById('freqValue').textContent = `${Math.round(value)} Hz`;
+        });
+
+        // Initialize frequency slider with logarithmic scale
+        const freqSlider = document.getElementById('filterFreq');
+        freqSlider.setAttribute('step', '1');
+        freqSlider.setAttribute('min', '0');
+        freqSlider.setAttribute('max', '100');
+        const initialFreq = Math.log(1000);
+        const minFreq = Math.log(20);
+        const maxFreq = Math.log(20000);
+        const scale = (maxFreq - minFreq) / (100 - 0);
+        freqSlider.value = (initialFreq - minFreq) / scale;
+    </script>
+</body>
+
+</html>
