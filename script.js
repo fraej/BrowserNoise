@@ -16,13 +16,18 @@ const noiseToggle = document.getElementById('noiseToggle');
 let isPlaying = false;
 
 // Noise Type Control
-document.getElementById('noiseType').addEventListener('change', e => {
-    const currentState = noise.state;
-    noise.stop();
-    noise.type = e.target.value;
-    if (currentState === 'started') {
-        noise.start();
-    }
+document.querySelectorAll('#noiseType .option-button').forEach(button => {
+    button.addEventListener('click', e => {
+        const currentState = noise.state;
+        noise.stop();
+        noise.type = e.target.dataset.value;
+        // Update active button
+        document.querySelectorAll('#noiseType .option-button').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+        if (currentState === 'started') {
+            noise.start();
+        }
+    });
 });
 
 // Volume Control
@@ -33,8 +38,13 @@ document.getElementById('noiseVolume').addEventListener('input', e => {
 });
 
 // Filter Type Control
-document.getElementById('filterType').addEventListener('change', e => {
-    filter.type = e.target.value;
+document.querySelectorAll('#filterType .option-button').forEach(button => {
+    button.addEventListener('click', e => {
+        filter.type = e.target.dataset.value;
+        // Update active button
+        document.querySelectorAll('#filterType .option-button').forEach(btn => btn.classList.remove('active'));
+        e.target.classList.add('active');
+    });
 });
 
 // Filter Frequency Control

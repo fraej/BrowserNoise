@@ -16,11 +16,11 @@
             <h2>Noise Generator</h2>
             <div>
                 <label>Noise Type</label>
-                <select id="noiseType">
-                    <option value="white">White</option>
-                    <option value="pink">Pink</option>
-                    <option value="brown">Brown</option>
-                </select>
+                <div id="noiseType" class="button-group">
+                    <button class="option-button active" data-value="white">White</button>
+                    <button class="option-button" data-value="pink">Pink</button>
+                    <button class="option-button" data-value="brown">Brown</button>
+                </div>
             </div>
             <div class="slider-wrapper">
                 <label>Volume</label>
@@ -35,12 +35,12 @@
             <h2>Filter</h2>
             <div>
                 <label>Filter Type</label>
-                <select id="filterType">
-                    <option value="lowpass">Lowpass</option>
-                    <option value="highpass">Highpass</option>
-                    <option value="bandpass">Bandpass</option>
-                    <option value="notch">Notch</option>
-                </select>
+                <div id="filterType" class="button-group">
+                    <button class="option-button active" data-value="lowpass">Lowpass</button>
+                    <button class="option-button" data-value="highpass">Highpass</button>
+                    <button class="option-button" data-value="bandpass">Bandpass</button>
+                    <button class="option-button" data-value="notch">Notch</button>
+                </div>
             </div>
             <div class="slider-wrapper">
                 <label>Frequency</label>

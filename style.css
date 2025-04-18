@@ -30,6 +30,7 @@ h2 {
     width: 100%;
     margin: 10px 0;
     -webkit-appearance: none;
+    appearance: none; /* Added standard property */
     height: 4px;
     background: #444;
     border-radius: 2px;
@@ -37,6 +38,7 @@ h2 {
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
+    appearance: none; /* Added standard property */
     width: 16px;
     height: 16px;
     background: #00ff9d;
@@ -50,13 +52,53 @@ label {
     margin-bottom: 5px;
 }
 
-select {
+/* select {
     background: #333;
     color: #fff;
     padding: 8px;
     border: 1px solid #00ff9d;
     border-radius: 4px;
     width: 200px;
+} */
+
+.button-group {
+    display: flex;
+    margin: 10px 0;
+}
+
+.option-button {
+    background: #444;
+    color: #fff;
+    border: 1px solid #555;
+    padding: 8px 15px;
+    cursor: pointer;
+    margin: 0;
+    border-radius: 0;
+    transition: background-color 0.2s ease;
+}
+
+.option-button:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+}
+
+.option-button:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.option-button:not(:last-child) {
+    border-right: none;
+}
+
+.option-button:hover {
+    background-color: #555;
+}
+
+.option-button.active {
+    background: #00ff9d;
+    color: #1a1a1a;
+    border-color: #00ff9d;
 }
 
 button {
@@ -71,6 +113,25 @@ button {
 
 button:hover {
     background: #00cc7d;
+}
+
+button#noiseToggle {
+    background: #00ff9d;
+    color: #1a1a1a;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 15px; /* Added margin */
+}
+
+button#noiseToggle:hover {
+    background: #00cc7d;
+}
+
+button#noiseToggle.active {
+    background: #ff0066; /* Keep active style for toggle */
+    color: #fff;
 }
 
 .active {
