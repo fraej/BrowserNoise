@@ -1,25 +1,113 @@
 body {
-    font-family: Arial, sans-serif;
-    background: #1a1a1a;
-    color: #fff;
-    padding: 20px;
+    font-family: "Chicago", "Geneva", "Helvetica", sans-serif;
+    background: #e6e6e6; /* Classic light gray macOS background */
+    color: #000000;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    min-width: 100vw;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.main-window {
+    width: 90%;
+    max-width: 900px;
+    border: 1px solid #888888;
+    border-radius: 8px 8px 8px 8px;
+    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
+    background: #dddddd;
+    overflow: hidden;
+}
+
+.window-titlebar {
+    height: 22px;
+    background: linear-gradient(to bottom, #dddddd, #cccccc);
+    border-bottom: 1px solid #aaaaaa;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    position: relative;
+}
+
+.window-controls {
+    display: flex;
+    gap: 6px;
+}
+
+.control {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.control.close {
+    background: #ff5f57;
+}
+
+.control.minimize {
+    background: #ffbd2e;
+}
+
+.control.zoom {
+    background: #28c941;
+}
+
+.window-title {
+    position: absolute;
+    width: 100%;
+    text-align: center;
+    font-weight: bold;
+    font-size: 13px;
+    left: 0;
+    pointer-events: none;
 }
 
 .container {
-    max-width: 800px;
-    margin: 0 auto;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: stretch;
+    width: 100%;
+    gap: 16px;
+    padding: 16px;
+    box-sizing: border-box;
 }
 
 .control-group {
-    background: #2a2a2a;
+    flex: 1 1 0;
+    background: #dddddd; /* Classic platinum color */
     padding: 20px;
     border-radius: 8px;
-    margin: 10px 0;
+    border: 1px solid #888888;
+    box-shadow: inset 1px 1px 0 #ffffff, 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+@media (max-width: 900px) {
+    .container {
+        flex-direction: column;
+        gap: 16px;
+        padding: 12px;
+    }
+    .control-group {
+        margin: 0;
+        padding: 16px;
+    }
 }
 
 h2 {
-    color: #00ff9d;
+    color: #000000;
     margin-top: 0;
+    font-weight: bold;
+    border-bottom: 1px solid #aaaaaa;
+    padding-bottom: 8px;
 }
 
 .slider-wrapper {
@@ -30,26 +118,29 @@ h2 {
     width: 100%;
     margin: 10px 0;
     -webkit-appearance: none;
-    appearance: none; /* Added standard property */
-    height: 4px;
-    background: #444;
-    border-radius: 2px;
+    appearance: none;
+    height: 8px;
+    background: #cccccc;
+    border-radius: 4px;
+    border: 1px solid #999999;
 }
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    appearance: none; /* Added standard property */
-    width: 16px;
-    height: 16px;
-    background: #00ff9d;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(to bottom, #ffffff, #dddddd);
+    border: 1px solid #888888;
     border-radius: 50%;
     cursor: pointer;
 }
 
 label {
     display: block;
-    color: #00ff9d;
+    color: #000000;
     margin-bottom: 5px;
+    font-weight: bold;
 }
 
 /* select {
@@ -67,14 +158,15 @@ label {
 }
 
 .option-button {
-    background: #444;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 8px 15px;
+    background: linear-gradient(to bottom, #ffffff, #dddddd);
+    color: #000000;
+    border: 1px solid #888888;
+    padding: 6px 12px;
     cursor: pointer;
     margin: 0;
     border-radius: 0;
-    transition: background-color 0.2s ease;
+    transition: background 0.2s ease;
+    box-shadow: inset 0 1px 0 #ffffff;
 }
 
 .option-button:first-child {
@@ -92,48 +184,59 @@ label {
 }
 
 .option-button:hover {
-    background-color: #555;
+    background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
 }
 
 .option-button.active {
-    background: #00ff9d;
-    color: #1a1a1a;
-    border-color: #00ff9d;
+    background: linear-gradient(to bottom, #cccccc, #aaaaaa);
+    color: #000000;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 button {
-    background: #00ff9d;
-    color: #1a1a1a;
-    border: none;
-    padding: 10px 20px;
+    background: linear-gradient(to bottom, #ffffff, #dddddd);
+    color: #000000;
+    border: 1px solid #888888;
+    padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
     margin: 5px;
+    box-shadow: inset 0 1px 0 #ffffff, 1px 1px 2px rgba(0, 0, 0, 0.1);
+    font-family: "Chicago", "Geneva", "Helvetica", sans-serif;
 }
 
 button:hover {
-    background: #00cc7d;
+    background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
+}
+
+button:active {
+    background: linear-gradient(to bottom, #cccccc, #aaaaaa);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
 button#noiseToggle {
-    background: #00ff9d;
-    color: #1a1a1a;
-    border: none;
-    padding: 10px 20px;
+    background: linear-gradient(to bottom, #ffffff, #dddddd);
+    color: #000000;
+    border: 1px solid #888888;
+    padding: 8px 16px;
     border-radius: 4px;
     cursor: pointer;
-    margin-top: 15px; /* Added margin */
+    margin-top: 15px;
+    width: 120px;
+    text-align: center;
 }
 
 button#noiseToggle:hover {
-    background: #00cc7d;
+    background: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
 }
 
 button#noiseToggle.active {
-    background: #ff0066; /* Keep active style for toggle */
-    color: #fff;
+    background: linear-gradient(to bottom, #cccccc, #aaaaaa);
+    color: #000000;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-.active {
-    background: #ff0066;
+span {
+    color: #333333;
+    font-size: 0.9em;
 }
