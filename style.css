@@ -1,6 +1,6 @@
 body {
     font-family: "Chicago", "Geneva", "Helvetica", sans-serif;
-    background: #e6e6e6; /* Classic light gray macOS background */
+    background: #424242; /* Classic light gray macOS background */
     color: #000000;
     margin: 0;
     padding: 0;
@@ -244,7 +244,7 @@ h2 {
     width: 18px;
     height: 18px;
     background: linear-gradient(to bottom, #ffffff, #dddddd);
-    border: 1px solid #888888;
+    border: 4px solid #888888;
     border-radius: 50%;
     cursor: pointer;
 }

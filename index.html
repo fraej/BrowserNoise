@@ -6,14 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://unpkg.com/tone"></script>
     <link rel="stylesheet" href="style.css">
-    <style>
-        @font-face {
-            font-family: 'Chicago';
-            src: url('https://cdn.jsdelivr.net/gh/jenskutilek/chicago-flf@master/fonts/Chicago.ttf') format('truetype');
-            font-weight: normal;
-            font-style: normal;
-        }
-    </style>
 </head>
 
 <body>
@@ -40,8 +32,8 @@
                 </div>
                 <div class="slider-wrapper">
                     <label>Volume</label>
-                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0" value="-20">
-                    <span id="volumeValue">-20 dB</span>
+                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0" value="0">
+                    <span id="volumeValue">0 dB</span>
                 </div>
                 <button id="noiseToggle">Start Noise</button>
             </div>

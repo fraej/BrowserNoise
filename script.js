@@ -5,7 +5,7 @@ const filter = new Tone.Filter({
     frequency: 1000,
     Q: 1
 });
-const volume = new Tone.Volume(-20);
+const volume = new Tone.Volume(0);
 
 // Connect components
 noise.chain(filter, volume, Tone.Destination);
