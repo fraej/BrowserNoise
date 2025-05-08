@@ -1,11 +1,27 @@
 // Initialize audio components
-const noise = new Tone.Noise("white").start();
-const filter = new Tone.Filter({
+let noise = new Tone.Noise("white").start();
+let filter = new Tone.Filter({
     type: "lowpass",
     frequency: 1000,
     Q: 1
 });
-const volume = new Tone.Volume(0);
+let volume;
+if (localStorage.getItem("volume")){
+    volume = new Tone.Volume(localStorage.getItem("volume"));
+} else {
+    volume = new Tone.Volume(0);
+}
+
+
+// Initialize the volume slider with the current volume value
+document.addEventListener('DOMContentLoaded', () => {
+    const volumeSlider = document.getElementById('noiseVolume');
+    if (volumeSlider) {
+        volumeSlider.value = volume.volume.value;
+        document.getElementById('volumeValue').textContent = `${volume.volume.value.toFixed(1)} dB`;
+    }
+});
+
 
 // Connect components
 noise.chain(filter, volume, Tone.Destination);
@@ -34,6 +50,7 @@ document.querySelectorAll('#noiseType .option-button').forEach(button => {
 document.getElementById('noiseVolume').addEventListener('input', e => {
     const value = parseFloat(e.target.value);
     volume.volume.value = value;
+    localStorage.setItem("volume", volume.volume.value);
     document.getElementById('volumeValue').textContent = `${value.toFixed(1)} dB`;
 });
 
