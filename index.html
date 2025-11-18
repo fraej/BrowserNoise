@@ -1,70 +1,718 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BrowserNoise</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <script src="https://unpkg.com/tone"></script>
-    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --window-bg: #f5f5f7;
+            --panel-bg: #ffffff;
+            --accent: #007AFF;
+            --text-main: #1d1d1f;
+            --text-secondary: #86868b;
+            --border: #d2d2d7;
+            --track-bg: #e5e5e5;
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            background: url('https://images.unsplash.com/photo-1621619856624-42fd193a0661?q=80&w=2858&auto=format&fit=crop') no-repeat center center fixed;
+            background-size: cover;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .app-window {
+            width: 90%;
+            max-width: 1100px;
+            height: 85vh;
+            background-color: rgba(245, 245, 247, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Title Bar */
+        .title-bar {
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 16px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            background: rgba(255, 255, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        .traffic-lights {
+            display: flex;
+            gap: 8px;
+        }
+
+        .light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .light.red {
+            background: #ff5f57;
+            border: 1px solid #e0443e;
+        }
+
+        .light.yellow {
+            background: #febc2e;
+            border: 1px solid #d89e24;
+        }
+
+        .light.green {
+            background: #28c840;
+            border: 1px solid #1aab29;
+        }
+
+        .window-title {
+            flex-grow: 1;
+            text-align: center;
+            font-weight: 600;
+            font-size: 13px;
+            opacity: 0.8;
+            margin-right: 54px;
+        }
+
+        /* Content */
+        .app-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: baseline;
+            gap: 15px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: 1px solid var(--border);
+            padding: 6px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border-radius: 6px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+            background: var(--panel-bg);
+            color: var(--text-main);
+        }
+
+        button#start-btn {
+            color: var(--accent);
+            font-weight: 600;
+            min-width: 80px;
+        }
+
+        button#start-btn.active {
+            background: var(--accent);
+            color: white;
+            border-color: var(--accent);
+        }
+
+        button#reset-btn:hover {
+            background: #f2f2f2;
+            color: #ff3b30;
+        }
+
+        /* Visualizer */
+        .viz-container {
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 4px rgba(0, 0, 0, 0.5);
+            margin-bottom: 24px;
+            height: 120px;
+            border: 1px solid #444;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Grid */
+        .synth-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border-radius: 10px;
+            padding: 16px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .panel h2 {
+            margin: 0 0 16px 0;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-secondary);
+            letter-spacing: 0.5px;
+        }
+
+        .control-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .val {
+            color: var(--text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* Sliders */
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: transparent;
+            margin: 5px 0;
+        }
+
+        input[type="range"]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            background: var(--track-bg);
+            border-radius: 2px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #ffffff;
+            border: 0.5px solid rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+            margin-top: -8px;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:active {
+            transform: scale(0.95);
+        }
+
+        select {
+            width: 100%;
+            padding: 6px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background-color: #f9f9f9;
+            font-size: 12px;
+            outline: none;
+        }
+
+        /* Toggle */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 36px;
+            height: 20px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e9e9ea;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(16px);
+        }
+    </style>
 </head>
 
 <body>
-    <div class="main-window">
-        <div class="window-titlebar">
-            <div class="window-controls">
-                <div class="control close"></div>
-                <div class="control minimize"></div>
-                <div class="control zoom"></div>
+
+    <div class="app-window">
+        <div class="title-bar">
+            <div class="traffic-lights">
+                <div class="light red"></div>
+                <div class="light yellow"></div>
+                <div class="light green"></div>
             </div>
             <div class="window-title">BrowserNoise</div>
         </div>
-        <div class="container">
-            <!-- Noise Controls -->
-            <div class="control-group">
-                <h2>Noise Generator</h2>
-                <div>
-                    <label>Noise Type</label>
-                    <div id="noiseType" class="button-group">
-                        <button class="option-button active" data-value="white">White</button>
-                        <button class="option-button" data-value="pink">Pink</button>
-                        <button class="option-button" data-value="brown">Brown</button>
-                    </div>
+
+        <div class="app-content">
+            <div class="app-header">
+                <div class="header-left">
+                    <h1>Audio Engine</h1>
                 </div>
-                <div class="slider-wrapper">
-                    <label>Volume</label>
-                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0">
-                    <span id="volumeValue">0 dB</span>
+                <div class="btn-group">
+                    <button id="reset-btn">Reset Factory</button>
+                    <button id="start-btn">Start</button>
                 </div>
-                <button id="noiseToggle">Start Noise</button>
             </div>
 
-            <!-- Filter Controls -->
-            <div class="control-group">
-                <h2>Filter</h2>
-                <div>
-                    <label>Filter Type</label>
-                    <div id="filterType" class="button-group">
-                        <button class="option-button active" data-value="lowpass">Lowpass</button>
-                        <button class="option-button" data-value="highpass">Highpass</button>
-                        <button class="option-button" data-value="bandpass">Bandpass</button>
-                        <button class="option-button" data-value="notch">Notch</button>
+            <div class="viz-container">
+                <canvas id="oscilloscope"></canvas>
+            </div>
+
+            <div class="synth-grid">
+
+                <!-- 1. SOURCE -->
+                <div class="panel">
+                    <h2>Generator</h2>
+                    <div class="control-group">
+                        <label>Noise Type</label>
+                        <select id="noise-type">
+                            <option value="pink">Pink Noise</option>
+                            <option value="white">White Noise</option>
+                            <option value="brown">Brown Noise</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label>Output Volume <span id="vol-val" class="val"></span></label>
+                        <input type="range" id="volume" min="-60" max="0">
                     </div>
                 </div>
-                <div class="slider-wrapper">
-                    <label>Frequency</label>
-                    <input type="range" id="filterFreq" class="slider" min="20" max="20000" value="1000">
-                    <span id="freqValue">1000 Hz</span>
+
+                <!-- 2. FILTER -->
+                <div class="panel">
+                    <h2>Filter</h2>
+                    <div class="control-group">
+                        <label>Cutoff <span id="freq-val" class="val"></span></label>
+                        <input type="range" id="filter-freq" min="50" max="15000" step="10">
+                    </div>
+                    <div class="control-group">
+                        <label>Resonance <span id="q-val" class="val"></span></label>
+                        <input type="range" id="filter-q" min="0" max="15" step="0.1">
+                    </div>
+                    <div class="toggle-row">
+                        <label>LFO Modulate</label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="lfo-active">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="control-group">
+                        <label>LFO Rate <span id="lfo-rate-val" class="val"></span></label>
+                        <input type="range" id="lfo-rate" min="0.1" max="15" step="0.1">
+                    </div>
                 </div>
-                <div class="slider-wrapper">
-                    <label>Resonance (Q)</label>
-                    <input type="range" id="filterQ" class="slider" min="0" max="20" step="0.1" value="1">
-                    <span id="qValue">1.0</span>
+
+                <!-- 3. DISTORTION -->
+                <div class="panel">
+                    <h2>Distortion</h2>
+                    <div class="control-group">
+                        <label>Bit Crusher <span id="bits-val" class="val"></span></label>
+                        <input type="range" id="crusher" min="1" max="8" step="1">
+                    </div>
+                    <div class="control-group">
+                        <label>Drive <span id="dist-val" class="val"></span></label>
+                        <input type="range" id="distortion" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label>Chebyshev <span id="cheby-val" class="val"></span></label>
+                        <input type="range" id="cheby" min="1" max="50" step="1">
+                    </div>
                 </div>
+
+                <!-- 4. MODULATION -->
+                <div class="panel">
+                    <h2>Modulation</h2>
+                    <div class="control-group">
+                        <label>Tremolo Depth <span id="trem-val" class="val"></span></label>
+                        <input type="range" id="trem-depth" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label>Tremolo Freq</label>
+                        <input type="range" id="trem-freq" min="0.1" max="20" step="0.1">
+                    </div>
+                    <div class="control-group" style="margin-top:15px; padding-top:15px; border-top:1px solid #eee;">
+                        <label>Vibrato Depth <span id="vib-val" class="val"></span></label>
+                        <input type="range" id="vib-depth" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label>Vibrato Freq</label>
+                        <input type="range" id="vib-freq" min="0.1" max="30" step="0.1">
+                    </div>
+                </div>
+
+                <!-- 5. SPACE -->
+                <div class="panel">
+                    <h2>Space</h2>
+                    <div class="control-group">
+                        <label>Stereo Width <span id="width-val" class="val"></span></label>
+                        <input type="range" id="widener" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label>Delay Mix <span id="delay-val" class="val"></span></label>
+                        <input type="range" id="delay-wet" min="0" max="1" step="0.01">
+                    </div>
+                    <div class="control-group">
+                        <label>Reverb Mix <span id="rev-val" class="val"></span></label>
+                        <input type="range" id="reverb" min="0" max="0.95" step="0.01">
+                    </div>
+                </div>
+
             </div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // --- Data Configuration ---
+        // This array maps IDs to default values and label formatting logic
+        const PARAMS = [
+            { id: 'noise-type', val: 'pink' },
+            { id: 'volume', val: -10, label: 'vol-val', suffix: ' dB' },
+            { id: 'filter-freq', val: 2000, label: 'freq-val', suffix: ' Hz' },
+            { id: 'filter-q', val: 1, label: 'q-val' },
+            { id: 'lfo-active', type: 'checkbox', val: false },
+            { id: 'lfo-rate', val: 0.5, label: 'lfo-rate-val', suffix: ' Hz' },
+            { id: 'crusher', val: 8, label: 'bits-val', mapLabel: v => v == 8 ? 'Clean' : v + ' bits' },
+            { id: 'distortion', val: 0, label: 'dist-val' },
+            { id: 'cheby', val: 1, label: 'cheby-val' },
+            { id: 'trem-depth', val: 0, label: 'trem-val', suffix: '%', scaleLabel: 100 },
+            { id: 'trem-freq', val: 5 },
+            { id: 'vib-depth', val: 0, label: 'vib-val', suffix: '%', scaleLabel: 100 },
+            { id: 'vib-freq', val: 5 },
+            { id: 'widener', val: 0.5, label: 'width-val' },
+            { id: 'delay-wet', val: 0, label: 'delay-val' },
+            { id: 'reverb', val: 0.2, label: 'rev-val' }
+        ];
+
+        // --- State Management ---
+
+        function saveSettings() {
+            const settings = {};
+            PARAMS.forEach(p => {
+                const el = document.getElementById(p.id);
+                if (p.type === 'checkbox') {
+                    settings[p.id] = el.checked;
+                } else {
+                    settings[p.id] = el.value; // save as string from input
+                }
+            });
+            localStorage.setItem('browsernoise_settings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = JSON.parse(localStorage.getItem('browsernoise_settings'));
+
+            PARAMS.forEach(p => {
+                const el = document.getElementById(p.id);
+                let value = p.val; // Default
+
+                // Override with saved if exists
+                if (saved && saved[p.id] !== undefined) {
+                    value = saved[p.id];
+                }
+
+                // Set Element State
+                if (p.type === 'checkbox') {
+                    el.checked = (value === true || value === "true");
+                } else {
+                    el.value = value;
+                }
+
+                updateLabel(p);
+            });
+        }
+
+        function resetSettings() {
+            if (confirm("Reset all parameters to factory defaults?")) {
+                PARAMS.forEach(p => {
+                    const el = document.getElementById(p.id);
+                    if (p.type === 'checkbox') {
+                        el.checked = p.val;
+                    } else {
+                        el.value = p.val;
+                    }
+
+                    // Update UI Label
+                    updateLabel(p);
+
+                    // Trigger event so Audio Engine updates (if running)
+                    const eventType = (p.type === 'checkbox' || p.id === 'noise-type') ? 'change' : 'input';
+                    el.dispatchEvent(new Event(eventType));
+                });
+                saveSettings();
+            }
+        }
+
+        function updateLabel(p) {
+            if (!p.label) return;
+            const el = document.getElementById(p.id);
+            const labelEl = document.getElementById(p.label);
+            let displayVal = el.value;
+
+            if (p.scaleLabel) displayVal = Math.round(displayVal * p.scaleLabel);
+            if (p.mapLabel) displayVal = p.mapLabel(displayVal);
+
+            labelEl.innerText = displayVal + (p.suffix || '');
+        }
+
+        // --- Audio Engine ---
+        let isPlaying = false;
+        let noise, filter, lfo, crusher, distortion, cheby, tremolo, vibrato, widener, delay, reverb, limiter, analyser;
+
+        const startBtn = document.getElementById('start-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const canvas = document.getElementById('oscilloscope');
+        const ctx = canvas.getContext('2d');
+
+        // Helper to get current value from DOM
+        const getVal = (id) => {
+            const el = document.getElementById(id);
+            return el.type === 'checkbox' ? el.checked : parseFloat(el.value);
+        };
+        const getStr = (id) => document.getElementById(id).value;
+
+        async function initAudio() {
+            await Tone.start();
+
+            // Initialize with values currently in the DOM (loaded from storage)
+            noise = new Tone.Noise(getStr('noise-type'));
+            noise.volume.value = getVal('volume');
+
+            crusher = new Tone.BitCrusher(getVal('crusher'));
+            distortion = new Tone.Distortion(getVal('distortion'));
+            cheby = new Tone.Chebyshev(getVal('cheby'));
+
+            filter = new Tone.Filter(getVal('filter-freq'), "lowpass");
+            filter.Q.value = getVal('filter-q');
+
+            lfo = new Tone.LFO("2n", 0, 0).start(); // Range set dynamically below
+
+            tremolo = new Tone.Tremolo(getVal('trem-freq'), getVal('trem-depth')).start();
+            vibrato = new Tone.Vibrato(getVal('vib-freq'), getVal('vib-depth'));
+
+            widener = new Tone.StereoWidener(getVal('widener'));
+            delay = new Tone.PingPongDelay("8n", 0.2);
+            delay.wet.value = getVal('delay-wet');
+
+            reverb = new Tone.Reverb({ decay: 3, wet: getVal('reverb') });
+            await reverb.generate();
+
+            limiter = new Tone.Limiter(-1);
+            analyser = new Tone.Waveform(512);
+
+            // Logic for LFO initialization
+            updateFilterLogic();
+
+            noise.chain(crusher, cheby, distortion, filter, vibrato, tremolo, delay, widener, reverb, limiter, Tone.Destination);
+            Tone.Destination.connect(analyser);
+
+            noise.start();
+            isPlaying = true;
+            updateUIState();
+            drawLoop();
+        }
+
+        // --- Logic ---
+
+        // 1. Lifecycle
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
+        });
+
+        startBtn.addEventListener('click', async () => {
+            if (!isPlaying) {
+                if (!noise) {
+                    startBtn.innerText = "Loading...";
+                    await initAudio();
+                } else {
+                    if (Tone.context.state !== 'running') Tone.context.resume();
+                    noise.start();
+                    isPlaying = true;
+                }
+            } else {
+                noise.stop();
+                isPlaying = false;
+            }
+            updateUIState();
+        });
+
+        resetBtn.addEventListener('click', resetSettings);
+
+        function updateUIState() {
+            if (isPlaying) {
+                startBtn.textContent = "Stop";
+                startBtn.classList.add('active');
+            } else {
+                startBtn.textContent = "Start";
+                startBtn.classList.remove('active');
+            }
+        }
+
+        // 2. Parameter Listeners
+        // We attach specific audio logic to inputs, AND general save logic
+
+        // Generic Helper to attach listener and auto-save
+        function attach(id, evt, fn) {
+            const el = document.getElementById(id);
+            el.addEventListener(evt, (e) => {
+                // 1. Update Label
+                const param = PARAMS.find(p => p.id === id);
+                if (param) updateLabel(param);
+
+                // 2. Run Audio Logic
+                if (fn) fn(e);
+
+                // 3. Save
+                saveSettings();
+            });
+        }
+
+        attach('noise-type', 'change', e => { if (noise) noise.type = e.target.value; });
+        attach('volume', 'input', e => { if (noise) noise.volume.rampTo(parseFloat(e.target.value), 0.1); });
+
+        attach('filter-freq', 'input', e => updateFilterLogic());
+        attach('filter-q', 'input', e => { if (filter) filter.Q.value = parseFloat(e.target.value); });
+        attach('lfo-active', 'change', e => updateFilterLogic());
+        attach('lfo-rate', 'input', e => { if (lfo) lfo.frequency.value = parseFloat(e.target.value); });
+
+        function updateFilterLogic() {
+            if (!filter || !lfo) return;
+            const center = getVal('filter-freq');
+            const isLfo = document.getElementById('lfo-active').checked;
+
+            // Update displayed freq label just in case
+            const p = PARAMS.find(x => x.id === 'filter-freq');
+            updateLabel(p);
+
+            if (isLfo) {
+                lfo.min = Math.max(50, center - 1000);
+                lfo.max = Math.min(15000, center + 1000);
+                try { lfo.connect(filter.frequency); } catch (e) { }
+            } else {
+                try { lfo.disconnect(filter.frequency); } catch (e) { }
+                filter.frequency.rampTo(center, 0.1);
+            }
+        }
+
+        attach('crusher', 'input', e => { if (crusher) crusher.bits = parseFloat(e.target.value); });
+        attach('distortion', 'input', e => { if (distortion) distortion.distortion = parseFloat(e.target.value); });
+        attach('cheby', 'input', e => { if (cheby) cheby.order = parseFloat(e.target.value); });
+
+        attach('trem-depth', 'input', e => { if (tremolo) tremolo.depth.value = parseFloat(e.target.value); });
+        attach('trem-freq', 'input', e => { if (tremolo) tremolo.frequency.value = parseFloat(e.target.value); });
+        attach('vib-depth', 'input', e => { if (vibrato) vibrato.depth.value = parseFloat(e.target.value); });
+        attach('vib-freq', 'input', e => { if (vibrato) vibrato.frequency.value = parseFloat(e.target.value); });
+
+        attach('widener', 'input', e => { if (widener) widener.width.value = parseFloat(e.target.value); });
+        attach('delay-wet', 'input', e => { if (delay) delay.wet.value = parseFloat(e.target.value); });
+        attach('reverb', 'input', e => { if (reverb) reverb.wet.value = parseFloat(e.target.value); });
+
+        // --- Visualizer ---
+        function drawLoop() {
+            requestAnimationFrame(drawLoop);
+            if (!analyser) return;
+
+            const w = canvas.parentElement.clientWidth;
+            const h = canvas.parentElement.clientHeight;
+            if (canvas.width !== w) canvas.width = w;
+            if (canvas.height !== h) canvas.height = h;
+
+            const buffer = analyser.getValue();
+            ctx.fillStyle = '#000000';
+            ctx.fillRect(0, 0, w, h);
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#007AFF';
+            ctx.beginPath();
+
+            const sliceWidth = w / buffer.length;
+            let x = 0;
+            for (let i = 0; i < buffer.length; i++) {
+                const v = buffer[i];
+                const y = (v * 0.8 + 1) * (h / 2);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                x += sliceWidth;
+            }
+            ctx.stroke();
+        }
+    </script>
 </body>
 
 </html>
