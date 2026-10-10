@@ -1,117 +1,242 @@
-// Initialize audio components
-let noise = new Tone.Noise("white").start();
-let filter = new Tone.Filter({
-    type: "lowpass",
-    frequency: 1000,
-    Q: 1
-});
-let volume;
-if (localStorage.getItem("volume")){
-    volume = new Tone.Volume(localStorage.getItem("volume"));
-} else {
-    volume = new Tone.Volume(0);
+// Settings
+const STORAGE_KEY = 'browsernoise-settings';
+const DEFAULTS = {
+    sound: 'white',
+    volume: -6,
+    // The filter starts fully open so presets are heard as designed
+    filterType: 'lowpass',
+    frequency: 20000,
+    q: 0.7
+};
+
+const MIN_FREQ = 20;
+const MAX_FREQ = 20000;
+const MIN_VOLUME = -60;
+const FILTER_TYPES = ['lowpass', 'highpass', 'bandpass', 'notch'];
+
+function loadSettings() {
+    const settings = { ...DEFAULTS };
+    try {
+        Object.assign(settings, JSON.parse(localStorage.getItem(STORAGE_KEY)));
+        // Migrate the volume stored by earlier versions
+        const legacyVolume = localStorage.getItem('volume');
+        if (legacyVolume !== null) {
+            settings.volume = parseFloat(legacyVolume);
+            localStorage.removeItem('volume');
+        }
+        // Earlier versions only had noise types
+        if (settings.noiseType) {
+            settings.sound = settings.noiseType;
+            delete settings.noiseType;
+        }
+    } catch (e) {
+        // Storage unavailable or corrupt: fall back to defaults
+    }
+    // Discard anything invalid so a bad stored value can't break the audio graph
+    const valid = {
+        sound: v => Object.hasOwn(SOUNDS, v),
+        filterType: v => FILTER_TYPES.includes(v),
+        volume: v => Number.isFinite(v) && v >= MIN_VOLUME && v <= 0,
+        frequency: v => Number.isFinite(v) && v >= MIN_FREQ && v <= MAX_FREQ,
+        q: v => Number.isFinite(v) && v > 0 && v <= 20
+    };
+    for (const key of Object.keys(valid)) {
+        if (!valid[key](settings[key])) {
+            settings[key] = DEFAULTS[key];
+        }
+    }
+    return settings;
 }
 
-
-// Initialize the volume slider with the current volume value
-document.addEventListener('DOMContentLoaded', () => {
-    const volumeSlider = document.getElementById('noiseVolume');
-    if (volumeSlider) {
-        volumeSlider.value = volume.volume.value;
-        document.getElementById('volumeValue').textContent = `${volume.volume.value.toFixed(1)} dB`;
+function saveSettings() {
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+    } catch (e) {
+        // Storage unavailable (e.g. private mode): settings just won't persist
     }
-});
+}
 
+const settings = loadSettings();
 
-// Connect components
-noise.chain(filter, volume, Tone.Destination);
-noise.stop(); // Initially stopped
+// Audio graph: sound preset -> filter -> volume -> limiter -> speakers
+// (the limiter catches peaks from thunder or a resonant filter setting)
+const filter = new Tone.Filter({ type: settings.filterType, frequency: settings.frequency, Q: settings.q });
+const volume = new Tone.Volume(settings.volume);
+filter.chain(volume, new Tone.Limiter(-1), Tone.Destination);
 
-// UI Controls
-const noiseToggle = document.getElementById('noiseToggle');
+let sound = createSound(settings.sound, filter);
 let isPlaying = false;
 
-// Noise Type Control
-document.querySelectorAll('#noiseType .option-button').forEach(button => {
-    button.addEventListener('click', e => {
-        const currentState = noise.state;
-        noise.stop();
-        noise.type = e.target.dataset.value;
-        // Update active button
-        document.querySelectorAll('#noiseType .option-button').forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
-        if (currentState === 'started') {
-            noise.start();
-        }
+// Crossfade to another preset, disposing the old one once it has faded out
+function switchSound(id) {
+    const previous = sound;
+    sound = createSound(id, filter);
+    if (isPlaying) {
+        previous.stop();
+        sound.start();
+        setTimeout(() => previous.dispose(), FADE_TIME * 1000 + 500);
+    } else {
+        previous.dispose();
+    }
+}
+
+// Frequency slider uses a logarithmic scale so each octave gets equal travel
+const freqSlider = document.getElementById('filterFreq');
+const freqSliderMax = parseFloat(freqSlider.max);
+const logMin = Math.log(MIN_FREQ);
+const logMax = Math.log(MAX_FREQ);
+
+function sliderToFreq(position) {
+    return Math.exp(logMin + (logMax - logMin) * (position / freqSliderMax));
+}
+
+function freqToSlider(freq) {
+    return ((Math.log(freq) - logMin) / (logMax - logMin)) * freqSliderMax;
+}
+
+function formatFreq(freq) {
+    return freq >= 1000 ? `${(freq / 1000).toFixed(freq >= 10000 ? 1 : 2)} kHz` : `${Math.round(freq)} Hz`;
+}
+
+// UI helpers
+function setupButtonGroup(groupId, initialValue, onSelect) {
+    const buttons = document.querySelectorAll(`#${groupId} .option-button`);
+    const select = value => {
+        buttons.forEach(btn => {
+            const isActive = btn.dataset.value === value;
+            btn.classList.toggle('active', isActive);
+            btn.setAttribute('aria-pressed', isActive);
+        });
+    };
+    buttons.forEach(button => {
+        button.addEventListener('click', () => {
+            select(button.dataset.value);
+            onSelect(button.dataset.value);
+        });
     });
+    select(initialValue);
+    return select;
+}
+
+function setupSlider(sliderId, outputId, initialValue, format, onInput) {
+    const slider = document.getElementById(sliderId);
+    const output = document.getElementById(outputId);
+    const update = () => {
+        const value = parseFloat(slider.value);
+        output.textContent = format(value);
+        return value;
+    };
+    slider.addEventListener('input', () => onInput(update()));
+    const set = value => {
+        slider.value = value;
+        update();
+    };
+    set(initialValue);
+    return set;
+}
+
+// Sound preset
+const selectSound = setupButtonGroup('sound', settings.sound, value => {
+    if (value === settings.sound) {
+        return;
+    }
+    switchSound(value);
+    settings.sound = value;
+    saveSettings();
 });
 
-// Volume Control
-document.getElementById('noiseVolume').addEventListener('input', e => {
-    const value = parseFloat(e.target.value);
-    volume.volume.value = value;
-    localStorage.setItem("volume", volume.volume.value);
-    document.getElementById('volumeValue').textContent = `${value.toFixed(1)} dB`;
+// Volume (the bottom of the range mutes completely)
+const formatVolume = value => (value <= MIN_VOLUME ? 'Muted' : `${value.toFixed(0)} dB`);
+function applyVolume(value) {
+    if (value <= MIN_VOLUME) {
+        volume.mute = true;
+    } else {
+        volume.mute = false;
+        volume.volume.rampTo(value, 0.05);
+    }
+}
+applyVolume(settings.volume);
+const setVolume = setupSlider('noiseVolume', 'volumeValue', settings.volume, formatVolume, value => {
+    applyVolume(value);
+    settings.volume = value;
+    saveSettings();
 });
 
-// Filter Type Control
-document.querySelectorAll('#filterType .option-button').forEach(button => {
-    button.addEventListener('click', e => {
-        filter.type = e.target.dataset.value;
-        // Update active button
-        document.querySelectorAll('#filterType .option-button').forEach(btn => btn.classList.remove('active'));
-        e.target.classList.add('active');
+// Filter type
+const selectFilterType = setupButtonGroup('filterType', settings.filterType, value => {
+    filter.type = value;
+    settings.filterType = value;
+    saveSettings();
+});
+
+// Filter frequency
+const setFreqSlider = setupSlider('filterFreq', 'freqValue', freqToSlider(settings.frequency),
+    position => formatFreq(sliderToFreq(position)),
+    position => {
+        const freq = sliderToFreq(position);
+        filter.frequency.rampTo(freq, 0.05);
+        settings.frequency = freq;
+        saveSettings();
     });
+
+// Filter Q
+const setQ = setupSlider('filterQ', 'qValue', settings.q, value => value.toFixed(1), value => {
+    filter.Q.rampTo(value, 0.05);
+    settings.q = value;
+    saveSettings();
 });
 
-// Filter Frequency Control
-document.getElementById('filterFreq').addEventListener('input', e => {
-    const value = parseFloat(e.target.value);
-    filter.frequency.value = value;
-    document.getElementById('freqValue').textContent = `${value.toFixed(0)} Hz`;
+// Reset everything to defaults
+document.getElementById('resetSettings').addEventListener('click', () => {
+    if (settings.sound !== DEFAULTS.sound) {
+        switchSound(DEFAULTS.sound);
+    }
+    Object.assign(settings, DEFAULTS);
+    saveSettings();
+
+    filter.type = settings.filterType;
+    filter.frequency.rampTo(settings.frequency, 0.05);
+    filter.Q.rampTo(settings.q, 0.05);
+    applyVolume(settings.volume);
+
+    selectSound(settings.sound);
+    selectFilterType(settings.filterType);
+    setVolume(settings.volume);
+    setFreqSlider(freqToSlider(settings.frequency));
+    setQ(settings.q);
 });
 
-// Filter Q Control
-document.getElementById('filterQ').addEventListener('input', e => {
-    const value = parseFloat(e.target.value);
-    filter.Q.value = value;
-    document.getElementById('qValue').textContent = value.toFixed(1);
-});
+// Start / stop
+const noiseToggle = document.getElementById('noiseToggle');
 
-// Noise Toggle
-noiseToggle.addEventListener('click', async () => {
-    // Start audio context if needed
+async function toggleNoise() {
+    // Browsers only allow audio to start after a user gesture
     await Tone.start();
 
-    if (isPlaying) {
-        noise.stop();
-        noiseToggle.textContent = 'Start Noise';
-        noiseToggle.classList.remove('active');
-    } else {
-        noise.start();
-        noiseToggle.textContent = 'Stop Noise';
-        noiseToggle.classList.add('active');
+    // Presets schedule their random events (drops, waves, gusts) on the Transport
+    const transport = Tone.getTransport();
+    if (transport.state !== 'started') {
+        transport.start();
     }
+
     isPlaying = !isPlaying;
-});
+    if (isPlaying) {
+        sound.start();
+    } else {
+        sound.stop();
+    }
+    noiseToggle.textContent = isPlaying ? 'Stop' : 'Play';
+    noiseToggle.classList.toggle('active', isPlaying);
+    noiseToggle.setAttribute('aria-pressed', isPlaying);
+}
 
-// Log scale conversion for frequency slider
-document.getElementById('filterFreq').addEventListener('input', function (e) {
-    const min = Math.log(20);
-    const max = Math.log(20000);
-    const scale = (max - min) / (100 - 0);
-    const value = Math.exp(min + scale * (e.target.value - 0));
-    filter.frequency.value = value;
-    document.getElementById('freqValue').textContent = `${Math.round(value)} Hz`;
-});
+noiseToggle.addEventListener('click', toggleNoise);
 
-// Initialize frequency slider with logarithmic scale
-const freqSlider = document.getElementById('filterFreq');
-freqSlider.setAttribute('step', '1');
-freqSlider.setAttribute('min', '0');
-freqSlider.setAttribute('max', '100');
-const initialFreq = Math.log(1000);
-const minFreq = Math.log(20);
-const maxFreq = Math.log(20000);
-const scale = (maxFreq - minFreq) / (100 - 0);
-freqSlider.value = (initialFreq - minFreq) / scale;
+// Space toggles playback, unless a button has focus (it handles Space itself)
+document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || e.repeat || e.target.closest('button')) {
+        return;
+    }
+    e.preventDefault();
+    toggleNoise();
+});
