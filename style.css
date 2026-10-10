@@ -238,6 +238,19 @@ button:focus-visible,
     border-right: none;
 }
 
+.button-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    margin: 10px 0;
+}
+
+.button-grid .option-button {
+    padding: 8px 6px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+}
+
 .option-button:focus-visible {
     position: relative;
     z-index: 1;
@@ -303,8 +316,12 @@ button:focus-visible,
         gap: 4px;
     }
 
-    .option-button,
-    .option-button:not(:last-child) {
+    .button-grid .option-button {
+        padding: 10px 6px;
+    }
+
+    .button-group .option-button,
+    .button-group .option-button:not(:last-child) {
         flex: 1 0 auto;
         min-width: 70px;
         padding: 10px 12px;
@@ -346,5 +363,9 @@ button:focus-visible,
 @media (max-width: 320px) {
     .button-group {
         flex-direction: column;
+    }
+
+    .button-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }

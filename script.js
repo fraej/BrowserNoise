@@ -1,17 +1,17 @@
 // Settings
 const STORAGE_KEY = 'browsernoise-settings';
 const DEFAULTS = {
-    noiseType: 'white',
-    volume: -12,
+    sound: 'white',
+    volume: -6,
+    // The filter starts fully open so presets are heard as designed
     filterType: 'lowpass',
-    frequency: 1000,
-    q: 1
+    frequency: 20000,
+    q: 0.7
 };
 
 const MIN_FREQ = 20;
 const MAX_FREQ = 20000;
 const MIN_VOLUME = -60;
-const NOISE_TYPES = ['white', 'pink', 'brown'];
 const FILTER_TYPES = ['lowpass', 'highpass', 'bandpass', 'notch'];
 
 function loadSettings() {
@@ -24,12 +24,17 @@ function loadSettings() {
             settings.volume = parseFloat(legacyVolume);
             localStorage.removeItem('volume');
         }
+        // Earlier versions only had noise types
+        if (settings.noiseType) {
+            settings.sound = settings.noiseType;
+            delete settings.noiseType;
+        }
     } catch (e) {
         // Storage unavailable or corrupt: fall back to defaults
     }
     // Discard anything invalid so a bad stored value can't break the audio graph
     const valid = {
-        noiseType: v => NOISE_TYPES.includes(v),
+        sound: v => Object.hasOwn(SOUNDS, v),
         filterType: v => FILTER_TYPES.includes(v),
         volume: v => Number.isFinite(v) && v >= MIN_VOLUME && v <= 0,
         frequency: v => Number.isFinite(v) && v >= MIN_FREQ && v <= MAX_FREQ,
@@ -53,11 +58,27 @@ function saveSettings() {
 
 const settings = loadSettings();
 
-// Audio graph: noise -> filter -> volume -> speakers
-const noise = new Tone.Noise({ type: settings.noiseType, fadeIn: 0.05, fadeOut: 0.05 });
+// Audio graph: sound preset -> filter -> volume -> limiter -> speakers
+// (the limiter catches peaks from thunder or a resonant filter setting)
 const filter = new Tone.Filter({ type: settings.filterType, frequency: settings.frequency, Q: settings.q });
 const volume = new Tone.Volume(settings.volume);
-noise.chain(filter, volume, Tone.Destination);
+filter.chain(volume, new Tone.Limiter(-1), Tone.Destination);
+
+let sound = createSound(settings.sound, filter);
+let isPlaying = false;
+
+// Crossfade to another preset, disposing the old one once it has faded out
+function switchSound(id) {
+    const previous = sound;
+    sound = createSound(id, filter);
+    if (isPlaying) {
+        previous.stop();
+        sound.start();
+        setTimeout(() => previous.dispose(), FADE_TIME * 1000 + 500);
+    } else {
+        previous.dispose();
+    }
+}
 
 // Frequency slider uses a logarithmic scale so each octave gets equal travel
 const freqSlider = document.getElementById('filterFreq');
@@ -114,10 +135,13 @@ function setupSlider(sliderId, outputId, initialValue, format, onInput) {
     return set;
 }
 
-// Noise type
-const selectNoiseType = setupButtonGroup('noiseType', settings.noiseType, value => {
-    noise.type = value;
-    settings.noiseType = value;
+// Sound preset
+const selectSound = setupButtonGroup('sound', settings.sound, value => {
+    if (value === settings.sound) {
+        return;
+    }
+    switchSound(value);
+    settings.sound = value;
     saveSettings();
 });
 
@@ -164,16 +188,18 @@ const setQ = setupSlider('filterQ', 'qValue', settings.q, value => value.toFixed
 
 // Reset everything to defaults
 document.getElementById('resetSettings').addEventListener('click', () => {
+    if (settings.sound !== DEFAULTS.sound) {
+        switchSound(DEFAULTS.sound);
+    }
     Object.assign(settings, DEFAULTS);
     saveSettings();
 
-    noise.type = settings.noiseType;
     filter.type = settings.filterType;
     filter.frequency.rampTo(settings.frequency, 0.05);
     filter.Q.rampTo(settings.q, 0.05);
     applyVolume(settings.volume);
 
-    selectNoiseType(settings.noiseType);
+    selectSound(settings.sound);
     selectFilterType(settings.filterType);
     setVolume(settings.volume);
     setFreqSlider(freqToSlider(settings.frequency));
@@ -187,15 +213,21 @@ async function toggleNoise() {
     // Browsers only allow audio to start after a user gesture
     await Tone.start();
 
-    const isPlaying = noise.state === 'started';
-    if (isPlaying) {
-        noise.stop();
-    } else {
-        noise.start();
+    // Presets schedule their random events (drops, waves, gusts) on the Transport
+    const transport = Tone.getTransport();
+    if (transport.state !== 'started') {
+        transport.start();
     }
-    noiseToggle.textContent = isPlaying ? 'Start Noise' : 'Stop Noise';
-    noiseToggle.classList.toggle('active', !isPlaying);
-    noiseToggle.setAttribute('aria-pressed', !isPlaying);
+
+    isPlaying = !isPlaying;
+    if (isPlaying) {
+        sound.start();
+    } else {
+        sound.stop();
+    }
+    noiseToggle.textContent = isPlaying ? 'Stop' : 'Play';
+    noiseToggle.classList.toggle('active', isPlaying);
+    noiseToggle.setAttribute('aria-pressed', isPlaying);
 }
 
 noiseToggle.addEventListener('click', toggleNoise);

@@ -4,7 +4,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Generate white, pink, and brown noise in your browser, with an adjustable filter.">
+    <meta name="description" content="White, pink and brown noise plus rain, ocean, wind and other soundscapes, synthesized live in your browser.">
     <title>BrowserNoise</title>
     <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
     <link rel="stylesheet" href="style.css">
@@ -21,24 +21,35 @@
             <h1 class="window-title">BrowserNoise</h1>
         </div>
         <div class="container">
-            <!-- Noise Controls -->
+            <!-- Sound Controls -->
             <section class="control-group">
-                <h2>Noise Generator</h2>
-                <div>
-                    <span class="label" id="noiseTypeLabel">Noise Type</span>
-                    <div id="noiseType" class="button-group" role="group" aria-labelledby="noiseTypeLabel">
+                <h2>Sound</h2>
+                <div id="sound">
+                    <span class="label" id="noiseLabel">Noise</span>
+                    <div class="button-group" role="group" aria-labelledby="noiseLabel">
                         <button type="button" class="option-button" data-value="white">White</button>
                         <button type="button" class="option-button" data-value="pink">Pink</button>
                         <button type="button" class="option-button" data-value="brown">Brown</button>
                     </div>
+                    <span class="label" id="soundscapeLabel">Soundscapes</span>
+                    <div class="button-grid" role="group" aria-labelledby="soundscapeLabel">
+                        <button type="button" class="option-button" data-value="rain" title="Steady rain with nearby drops">Rain</button>
+                        <button type="button" class="option-button" data-value="storm" title="Heavy rain with distant and nearby thunder">Storm</button>
+                        <button type="button" class="option-button" data-value="ocean" title="Waves rolling in and washing out">Ocean</button>
+                        <button type="button" class="option-button" data-value="wind" title="Gusting wind with a faint whistle">Wind</button>
+                        <button type="button" class="option-button" data-value="stream" title="A babbling brook">Stream</button>
+                        <button type="button" class="option-button" data-value="fan" title="A box fan on low">Fan</button>
+                        <button type="button" class="option-button" data-value="fire" title="A crackling campfire">Fire</button>
+                        <button type="button" class="option-button" data-value="night" title="Crickets on a still night">Night</button>
+                    </div>
                 </div>
                 <div class="slider-wrapper">
                     <label for="noiseVolume">Volume</label>
-                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0" step="1" value="-12">
-                    <output id="volumeValue" for="noiseVolume">-12 dB</output>
+                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0" step="1" value="-6">
+                    <output id="volumeValue" for="noiseVolume">-6 dB</output>
                 </div>
-                <button type="button" id="noiseToggle" aria-pressed="false">Start Noise</button>
-                <p class="hint">Press <kbd>Space</kbd> to start or stop</p>
+                <button type="button" id="noiseToggle" aria-pressed="false">Play</button>
+                <p class="hint">Press <kbd>Space</kbd> to play or stop</p>
             </section>
 
             <!-- Filter Controls -->
@@ -56,18 +67,19 @@
                 <div class="slider-wrapper">
                     <label for="filterFreq">Frequency</label>
                     <input type="range" id="filterFreq" class="slider" min="0" max="1000" step="1">
-                    <output id="freqValue" for="filterFreq">1000 Hz</output>
+                    <output id="freqValue" for="filterFreq">20.0 kHz</output>
                 </div>
                 <div class="slider-wrapper">
                     <label for="filterQ">Resonance (Q)</label>
-                    <input type="range" id="filterQ" class="slider" min="0.1" max="20" step="0.1" value="1">
-                    <output id="qValue" for="filterQ">1.0</output>
+                    <input type="range" id="filterQ" class="slider" min="0.1" max="20" step="0.1" value="0.7">
+                    <output id="qValue" for="filterQ">0.7</output>
                 </div>
                 <button type="button" id="resetSettings">Reset</button>
             </section>
         </div>
     </main>
 
+    <script src="sounds.js"></script>
     <script src="script.js"></script>
 </body>
 
