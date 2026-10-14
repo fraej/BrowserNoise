@@ -4,83 +4,136 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="White, pink and brown noise plus rain, ocean, wind and other soundscapes, synthesized live in your browser.">
+    <meta name="description" content="White, pink and brown noise plus rain, ocean, wind and other soundscapes, synthesized live in your browser, with a chain of filters and effects.">
     <title>BrowserNoise</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M2 6h3l4-3.5v11L5 10H2z' fill='%23222'/%3E%3Cpath d='M11 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6 6 0 0 1 0 9' fill='none' stroke='%236666aa' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E">
     <script src="https://unpkg.com/tone@15.1.22/build/Tone.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-    <main class="main-window">
-        <div class="window-titlebar">
-            <div class="window-controls" aria-hidden="true">
-                <div class="control close"></div>
-                <div class="control minimize"></div>
-                <div class="control zoom"></div>
-            </div>
-            <h1 class="window-title">BrowserNoise</h1>
-        </div>
-        <div class="container">
-            <!-- Sound Controls -->
-            <section class="control-group">
-                <h2>Sound</h2>
-                <div id="sound">
-                    <span class="label" id="noiseLabel">Noise</span>
-                    <div class="button-group" role="group" aria-labelledby="noiseLabel">
-                        <button type="button" class="option-button" data-value="white">White</button>
-                        <button type="button" class="option-button" data-value="pink">Pink</button>
-                        <button type="button" class="option-button" data-value="brown">Brown</button>
-                    </div>
-                    <span class="label" id="soundscapeLabel">Soundscapes</span>
-                    <div class="button-grid" role="group" aria-labelledby="soundscapeLabel">
-                        <button type="button" class="option-button" data-value="rain" title="Steady rain with nearby drops">Rain</button>
-                        <button type="button" class="option-button" data-value="storm" title="Heavy rain with distant and nearby thunder">Storm</button>
-                        <button type="button" class="option-button" data-value="ocean" title="Waves rolling in and washing out">Ocean</button>
-                        <button type="button" class="option-button" data-value="wind" title="Gusting wind with a faint whistle">Wind</button>
-                        <button type="button" class="option-button" data-value="stream" title="A babbling brook">Stream</button>
-                        <button type="button" class="option-button" data-value="fan" title="A box fan on low">Fan</button>
-                        <button type="button" class="option-button" data-value="fire" title="A crackling campfire">Fire</button>
-                        <button type="button" class="option-button" data-value="night" title="Crickets on a still night">Night</button>
-                    </div>
-                </div>
-                <div class="slider-wrapper">
-                    <label for="noiseVolume">Volume</label>
-                    <input type="range" id="noiseVolume" class="slider" min="-60" max="0" step="1" value="-6">
-                    <output id="volumeValue" for="noiseVolume">-6 dB</output>
-                </div>
-                <button type="button" id="noiseToggle" aria-pressed="false">Play</button>
-                <p class="hint">Press <kbd>Space</kbd> to play or stop</p>
-            </section>
+    <!-- Mac OS 8 style menu bar (decorative): what's playing, and a clock -->
+    <div class="menubar" aria-hidden="true">
+        <span class="menubar-app">
+            <svg class="app-icon" viewBox="0 0 16 16" width="16" height="16">
+                <path d="M2 6h3l4-3.5v11L5 10H2z" fill="#222" />
+                <path d="M11 5.5a3.5 3.5 0 0 1 0 5M12.5 3.5a6 6 0 0 1 0 9" fill="none" stroke="#6666aa" stroke-width="1.5" stroke-linecap="round" />
+            </svg>
+            BrowserNoise
+        </span>
+        <span class="menubar-status" id="menuStatus"></span>
+        <span class="menubar-clock" id="menuClock"></span>
+    </div>
 
-            <!-- Filter Controls -->
-            <section class="control-group">
-                <h2>Filter</h2>
-                <div>
-                    <span class="label" id="filterTypeLabel">Filter Type</span>
-                    <div id="filterType" class="button-group" role="group" aria-labelledby="filterTypeLabel">
-                        <button type="button" class="option-button" data-value="lowpass">Lowpass</button>
-                        <button type="button" class="option-button" data-value="highpass">Highpass</button>
-                        <button type="button" class="option-button" data-value="bandpass">Bandpass</button>
-                        <button type="button" class="option-button" data-value="notch">Notch</button>
+    <main class="desktop">
+        <section class="window" aria-labelledby="mainTitle">
+            <div class="title-bar">
+                <span class="title-box close-box" aria-hidden="true"></span>
+                <span class="stripes"></span>
+                <h1 class="window-title" id="mainTitle">BrowserNoise</h1>
+                <span class="stripes"></span>
+                <button type="button" class="title-box collapse-box" aria-label="Collapse BrowserNoise window" aria-expanded="true"></button>
+            </div>
+            <div class="window-body container">
+                <!-- Sound Controls -->
+                <section class="control-group">
+                    <h2>Sound</h2>
+                    <div id="sound">
+                        <span class="label" id="noiseLabel">Noise</span>
+                        <div class="button-group" role="group" aria-labelledby="noiseLabel">
+                            <button type="button" class="option-button" data-value="white">White</button>
+                            <button type="button" class="option-button" data-value="pink">Pink</button>
+                            <button type="button" class="option-button" data-value="brown">Brown</button>
+                        </div>
+                        <span class="label" id="soundscapeLabel">Soundscapes</span>
+                        <div class="button-grid" role="group" aria-labelledby="soundscapeLabel">
+                            <button type="button" class="option-button" data-value="rain" title="Steady rain with nearby drops">Rain</button>
+                            <button type="button" class="option-button" data-value="storm" title="Heavy rain with distant and nearby thunder">Storm</button>
+                            <button type="button" class="option-button" data-value="ocean" title="Waves rolling in and washing out">Ocean</button>
+                            <button type="button" class="option-button" data-value="wind" title="Gusting wind with a faint whistle">Wind</button>
+                            <button type="button" class="option-button" data-value="stream" title="A babbling brook">Stream</button>
+                            <button type="button" class="option-button" data-value="fan" title="A box fan on low">Fan</button>
+                            <button type="button" class="option-button" data-value="fire" title="A crackling campfire">Fire</button>
+                            <button type="button" class="option-button" data-value="night" title="Crickets on a still night">Night</button>
+                        </div>
                     </div>
+                    <div class="slider-wrapper">
+                        <div class="param-label">
+                            <label for="noiseVolume">Volume</label>
+                            <output id="volumeValue" for="noiseVolume">-6 dB</output>
+                        </div>
+                        <input type="range" id="noiseVolume" class="slider" min="-60" max="0" step="1" value="-6">
+                    </div>
+                    <button type="button" id="noiseToggle" aria-pressed="false">Play</button>
+                    <p class="hint">Press <kbd>Space</kbd> to play or stop</p>
+                </section>
+
+                <!-- Filter Controls -->
+                <section class="control-group">
+                    <h2>Filter</h2>
+                    <div>
+                        <span class="label" id="filterTypeLabel">Filter Type</span>
+                        <div id="filterType" class="button-group" role="group" aria-labelledby="filterTypeLabel">
+                            <button type="button" class="option-button" data-value="lowpass">Lowpass</button>
+                            <button type="button" class="option-button" data-value="highpass">Highpass</button>
+                            <button type="button" class="option-button" data-value="bandpass">Bandpass</button>
+                            <button type="button" class="option-button" data-value="notch">Notch</button>
+                        </div>
+                    </div>
+                    <div class="slider-wrapper">
+                        <div class="param-label">
+                            <label for="filterFreq">Frequency</label>
+                            <output id="freqValue" for="filterFreq">20.0 kHz</output>
+                        </div>
+                        <input type="range" id="filterFreq" class="slider" min="0" max="1000" step="1">
+                    </div>
+                    <div class="slider-wrapper">
+                        <div class="param-label">
+                            <label for="filterQ">Resonance (Q)</label>
+                            <output id="qValue" for="filterQ">0.7</output>
+                        </div>
+                        <input type="range" id="filterQ" class="slider" min="0.1" max="20" step="0.1" value="0.7">
+                    </div>
+                    <button type="button" id="resetSettings">Reset</button>
+                </section>
+            </div>
+        </section>
+
+        <!-- Effects Chain -->
+        <section class="window" aria-labelledby="effectsTitle">
+            <div class="title-bar">
+                <span class="title-box close-box" aria-hidden="true"></span>
+                <span class="stripes"></span>
+                <h2 class="window-title" id="effectsTitle">Effects</h2>
+                <span class="stripes"></span>
+                <button type="button" class="title-box collapse-box" aria-label="Collapse Effects window" aria-expanded="true"></button>
+            </div>
+            <div class="window-body">
+                <p class="panel-note">Effects run in order, top to bottom, after the filter.</p>
+                <p class="panel-note" id="effectsFileNote" hidden>Some effects need the page to be served by a web server; they don't work when it's opened as a file.</p>
+                <ol id="effectChain" class="effect-chain"></ol>
+                <p id="effectsEmpty" class="effects-empty">No effects yet. Add one below, or load a preset chain.</p>
+                <div class="effects-toolbar">
+                    <div class="toolbar-group">
+                        <label for="effectPicker">Effect</label>
+                        <select id="effectPicker"></select>
+                        <button type="button" id="addEffect">Add</button>
+                    </div>
+                    <div class="toolbar-group">
+                        <label for="chainPreset">Preset chain</label>
+                        <select id="chainPreset"></select>
+                        <button type="button" id="loadChainPreset">Load</button>
+                    </div>
+                    <button type="button" id="clearEffects">Clear all</button>
                 </div>
-                <div class="slider-wrapper">
-                    <label for="filterFreq">Frequency</label>
-                    <input type="range" id="filterFreq" class="slider" min="0" max="1000" step="1">
-                    <output id="freqValue" for="filterFreq">20.0 kHz</output>
-                </div>
-                <div class="slider-wrapper">
-                    <label for="filterQ">Resonance (Q)</label>
-                    <input type="range" id="filterQ" class="slider" min="0.1" max="20" step="0.1" value="0.7">
-                    <output id="qValue" for="filterQ">0.7</output>
-                </div>
-                <button type="button" id="resetSettings">Reset</button>
-            </section>
-        </div>
+            </div>
+        </section>
     </main>
 
     <script src="sounds.js"></script>
+    <script src="effects.js"></script>
     <script src="script.js"></script>
+    <script src="rack.js"></script>
 </body>
 
 </html>

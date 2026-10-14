@@ -1,3 +1,20 @@
+/* Mac OS 8 "Platinum" appearance, the look that came out of Copland, with
+   its lavender accent color */
+
+/* Mac OS 8's fonts are Charcoal (everything) and Geneva (small text). They
+   belong to Apple, so they can't be bundled with the site, but Macs still
+   come with both (Charcoal as "Charcoal CY"). Elsewhere, Barlow Semi
+   Condensed (SIL Open Font License, see fonts/OFL.txt) stands in for
+   Charcoal, and Verdana or DejaVu Sans for Geneva. */
+@font-face {
+    font-family: "Charcoal Stand-in";
+    src: url("fonts/barlow-semi-condensed-latin-600-normal.woff2") format("woff2");
+    /* Charcoal has one weight, already heavy: use it for all of them */
+    font-weight: 100 900;
+    font-display: swap;
+    size-adjust: 108%;
+}
+
 *,
 *::before,
 *::after {
@@ -5,206 +22,346 @@
 }
 
 :root {
-    --font: "Chicago", "Geneva", "Helvetica", sans-serif;
+    --font: "Charcoal", "Charcoal CY", "Charcoal Stand-in", sans-serif;
+    --font-small: "Geneva", "Geneva CY", Verdana, "DejaVu Sans", sans-serif;
+
     --platinum: #dddddd;
-    --border: #888888;
-    --border-light: #aaaaaa;
-    --raised: linear-gradient(to bottom, #ffffff, #dddddd);
-    --raised-hover: linear-gradient(to bottom, #f0f0f0, #d0d0d0);
-    --pressed: linear-gradient(to bottom, #cccccc, #aaaaaa);
-    --focus: #3a6fd8;
+    --platinum-light: #eeeeee;
+    --platinum-dark: #bbbbbb;
+    --highlight: #ffffff;
+    --shadow: #999999;
+    --shadow-dark: #666666;
+    --outline: #222222;
+    --text-muted: #555555;
+    --text-disabled: #999999;
+
+    --accent-light: #ccccff;
+    --accent: #9999dd;
+    --accent-dark: #555599;
+
+    --desktop: #62629d;
+    --desktop-dither: #6b6ba7;
+
+    /* 3D bevels: light from the top left */
+    --raised: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--shadow);
+    --sunken: inset 1px 1px 0 var(--shadow), inset -1px -1px 0 var(--highlight);
+    --pressed: inset 1px 1px 0 var(--shadow-dark), inset -1px -1px 0 var(--platinum-dark);
+    --bevel-button: inset 1px 1px 0 var(--highlight), inset 2px 2px 0 var(--platinum-light),
+        inset -1px -1px 0 var(--shadow), inset -2px -2px 0 var(--platinum-dark);
+    --default-ring: 0 0 0 1px var(--platinum), 0 0 0 4px var(--shadow-dark), 0 0 0 5px var(--outline);
 }
 
 body {
-    font-family: var(--font);
-    background: #424242;
-    color: #000000;
     margin: 0;
-    padding: 16px;
     min-height: 100vh;
+    font: 12px/1.4 var(--font);
+    /* Mac OS 8 never bolded or slanted its fonts; don't fake it either */
+    font-synthesis: none;
+    color: #000000;
+    background-color: var(--desktop);
+    /* A fine two-tone dither, like a classic desktop pattern */
+    background-image: repeating-conic-gradient(var(--desktop-dither) 0 25%, var(--desktop) 0 50%);
+    background-size: 4px 4px;
+}
+
+::selection {
+    background: var(--accent-light);
+}
+
+/* Menu bar */
+.menubar {
+    position: sticky;
+    top: 0;
+    z-index: 10;
     display: flex;
-    justify-content: center;
     align-items: center;
-}
-
-.main-window {
-    width: 100%;
-    max-width: 900px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.2);
-    background: var(--platinum);
-    overflow: hidden;
-}
-
-.window-titlebar {
+    gap: 16px;
     height: 22px;
-    background: linear-gradient(to bottom, #dddddd, #cccccc);
-    border-bottom: 1px solid var(--border-light);
-    display: flex;
-    align-items: center;
-    padding: 0 8px;
-    position: relative;
+    padding: 0 12px;
+    background: var(--platinum);
+    border-bottom: 1px solid var(--outline);
+    box-shadow: inset 0 1px 0 var(--highlight);
+    white-space: nowrap;
 }
 
-.window-controls {
-    display: flex;
+.menubar-app {
+    display: inline-flex;
+    align-items: center;
     gap: 6px;
 }
 
-.control {
-    width: 12px;
+.menubar-status {
+    margin-left: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Windows */
+.desktop {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 16px 40px;
+}
+
+.window {
+    width: 100%;
+    max-width: 900px;
+    background: var(--platinum);
+    border: 1px solid var(--outline);
+    box-shadow: var(--raised), 2px 2px 0 rgba(0, 0, 0, 0.4);
+}
+
+.title-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    height: 22px;
+    padding: 0 6px;
+    border-bottom: 1px solid var(--shadow-dark);
+    box-shadow: 0 1px 0 var(--highlight);
+    user-select: none;
+}
+
+/* Pinstripes either side of the title */
+.stripes {
+    flex: 1;
+    min-width: 6px;
     height: 12px;
-    border-radius: 50%;
-    border: 1px solid rgba(0, 0, 0, 0.3);
-}
-
-.control.close {
-    background: #ff5f57;
-}
-
-.control.minimize {
-    background: #ffbd2e;
-}
-
-.control.zoom {
-    background: #28c941;
+    background: repeating-linear-gradient(to bottom, var(--shadow) 0 1px, var(--highlight) 1px 2px);
 }
 
 .window-title {
-    position: absolute;
-    left: 0;
-    width: 100%;
     margin: 0;
-    text-align: center;
-    font-weight: bold;
-    font-size: 13px;
-    pointer-events: none;
+    padding: 0 6px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: normal;
 }
 
-.container {
-    display: flex;
-    gap: 16px;
+.title-box {
+    position: relative;
+    flex: none;
+    width: 13px;
+    height: 13px;
+    min-height: 0;
+    padding: 0;
+    border: 1px solid var(--outline);
+    border-radius: 0;
+    background: linear-gradient(135deg, var(--highlight), var(--platinum-dark));
+    box-shadow: var(--raised);
+}
+
+/* The collapse box's mark: a bar across the middle */
+.collapse-box::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 1px;
+    right: 1px;
+    height: 5px;
+    border-top: 1px solid var(--outline);
+    border-bottom: 1px solid var(--outline);
+}
+
+.collapse-box:active {
+    background: var(--shadow);
+    box-shadow: var(--pressed);
+}
+
+/* Like Mac OS 8, only the window you're working in looks active */
+.desktop:focus-within .window:not(:focus-within) .stripes,
+.desktop:focus-within .window:not(:focus-within) .title-box {
+    opacity: 0;
+}
+
+.desktop:focus-within .window:not(:focus-within) .window-title {
+    color: var(--shadow-dark);
+}
+
+/* Collapsed ("windowshaded") windows roll up to their title bar */
+.window.collapsed .window-body {
+    display: none;
+}
+
+.window.collapsed .title-bar {
+    border-bottom: none;
+    box-shadow: none;
+}
+
+.window-body {
     padding: 16px;
 }
 
+.container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    padding-top: 24px;
+}
+
+/* Group boxes: an etched frame with the title set into its top edge */
 .control-group {
-    flex: 1 1 0;
+    position: relative;
     min-width: 0;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 16px 14px 14px;
+    border: 1px solid var(--shadow);
+    box-shadow: inset 1px 1px 0 var(--highlight), 1px 1px 0 var(--highlight);
+}
+
+.control-group > h2 {
+    position: absolute;
+    top: -9px;
+    left: 10px;
+    margin: 0;
+    padding: 0 4px;
     background: var(--platinum);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    box-shadow: inset 1px 1px 0 #ffffff, 2px 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+    font-weight: normal;
+    line-height: 16px;
 }
 
-h2 {
-    margin-top: 0;
-    font-weight: bold;
-    border-bottom: 1px solid var(--border-light);
-    padding-bottom: 8px;
-}
-
+/* Text */
 label,
 .label {
     display: block;
     margin-bottom: 5px;
-    font-weight: bold;
+}
+
+.param-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+
+.param-label label {
+    margin-bottom: 0;
 }
 
 output {
-    color: #333333;
-    font-size: 0.9em;
+    font: 11px var(--font-small);
     font-variant-numeric: tabular-nums;
 }
 
+.hint,
+.panel-note {
+    margin: 0 0 12px;
+    color: var(--text-muted);
+    font: 11px/1.4 var(--font-small);
+}
+
 .hint {
-    margin: 10px 0 0;
-    color: #555555;
-    font-size: 0.8em;
+    margin: 12px 0 0;
 }
 
 kbd {
-    font-family: var(--font);
-    padding: 1px 5px;
-    border: 1px solid var(--border);
+    padding: 0 4px;
+    border: 1px solid var(--shadow-dark);
     border-radius: 3px;
-    background: var(--raised);
+    background: var(--platinum);
+    box-shadow: var(--raised);
+    color: #000000;
+    font: 10px var(--font-small);
 }
 
-/* Sliders */
+/* Sliders, with Mac OS 8's pointer-shaped thumb */
 .slider-wrapper {
-    margin: 15px 0;
+    margin-top: 14px;
 }
 
 .slider {
-    width: 100%;
-    margin: 10px 0;
     -webkit-appearance: none;
     appearance: none;
-    height: 8px;
-    background: #cccccc;
-    border: 1px solid #999999;
-    border-radius: 4px;
+    display: block;
+    width: 100%;
+    height: 20px;
+    margin: 2px 0 0;
+    background: transparent;
+    cursor: pointer;
     touch-action: manipulation;
+}
+
+.slider::-webkit-slider-runnable-track {
+    height: 6px;
+    background: var(--platinum-dark);
+    box-shadow: inset 1px 1px 0 var(--shadow-dark), inset -1px -1px 0 var(--highlight);
+}
+
+.slider::-moz-range-track {
+    height: 6px;
+    background: var(--platinum-dark);
+    box-shadow: inset 1px 1px 0 var(--shadow-dark), inset -1px -1px 0 var(--highlight);
 }
 
 .slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 18px;
-    height: 18px;
-    background: var(--raised);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    cursor: pointer;
+    width: 11px;
+    height: 17px;
+    margin-top: -5px;
+    border: none;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='17' viewBox='0 0 11 17'%3E%3Cpath d='M.5.5h10V11l-5 5.3-5-5.3z' fill='%23ccf' stroke='%23336'/%3E%3Cpath d='M1.5 10.6V1.5h8' fill='none' stroke='%23fff'/%3E%3Cpath d='M9.5 2v8.6l-4 4.3' fill='none' stroke='%237777bb'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
 }
 
 .slider::-moz-range-thumb {
-    width: 18px;
-    height: 18px;
-    background: var(--raised);
-    border: 1px solid var(--border);
-    border-radius: 50%;
-    cursor: pointer;
+    width: 11px;
+    height: 17px;
+    border: none;
+    border-radius: 0;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='17' viewBox='0 0 11 17'%3E%3Cpath d='M.5.5h10V11l-5 5.3-5-5.3z' fill='%23ccf' stroke='%23336'/%3E%3Cpath d='M1.5 10.6V1.5h8' fill='none' stroke='%23fff'/%3E%3Cpath d='M9.5 2v8.6l-4 4.3' fill='none' stroke='%237777bb'/%3E%3C/svg%3E") no-repeat center / 100% 100%;
 }
 
-/* Buttons */
+/* Push buttons */
 button {
-    font-family: var(--font);
-    font-size: 14px;
+    min-height: 22px;
+    padding: 3px 14px;
     color: #000000;
-    background: var(--raised);
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    padding: 8px 16px;
+    background: var(--platinum);
+    border: 1px solid var(--outline);
+    border-radius: 5px;
+    box-shadow: var(--raised);
+    font: inherit;
+    font-size: 12px;
+    line-height: 1.2;
     cursor: pointer;
-    box-shadow: inset 0 1px 0 #ffffff, 1px 1px 2px rgba(0, 0, 0, 0.1);
-    transition: background 0.2s ease;
 }
 
-button:hover {
-    background: var(--raised-hover);
+button:active {
+    background: var(--shadow);
+    box-shadow: var(--pressed);
 }
 
-button:active,
-button.active {
-    background: var(--pressed);
-    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+button:disabled {
+    color: var(--text-disabled);
+    border-color: var(--shadow);
+    background: var(--platinum);
+    box-shadow: var(--raised);
+    cursor: default;
 }
 
 button:focus-visible,
+select:focus-visible,
 .slider:focus-visible {
-    outline: 2px solid var(--focus);
+    outline: 2px solid var(--accent-dark);
     outline-offset: 2px;
 }
 
+/* Play is the default button, with the thick ring around it */
 #noiseToggle {
     align-self: flex-start;
-    min-width: 120px;
-    margin-top: 15px;
+    min-width: 96px;
+    margin: 18px 5px 5px;
+    box-shadow: var(--raised), var(--default-ring);
+}
+
+#noiseToggle:active {
+    box-shadow: var(--pressed), var(--default-ring);
 }
 
 #resetSettings {
@@ -212,150 +369,362 @@ button:focus-visible,
     margin-top: auto;
 }
 
-/* Segmented button groups */
-.button-group {
-    display: flex;
-    margin: 10px 0;
+/* Bevel buttons, which stay pressed in while selected */
+.option-button,
+.icon-button {
+    border-color: var(--shadow-dark);
+    border-radius: 0;
+    box-shadow: var(--bevel-button);
 }
 
 .option-button {
-    padding: 6px 12px;
-    border-radius: 0;
-    box-shadow: inset 0 1px 0 #ffffff;
+    min-height: 24px;
+    padding: 4px 10px;
 }
 
-.option-button:first-child {
-    border-top-left-radius: 4px;
-    border-bottom-left-radius: 4px;
+.option-button.active,
+.option-button:active,
+.icon-button:active {
+    background: #b4b4b4;
+    box-shadow: inset 1px 1px 0 var(--shadow-dark), inset 2px 2px 0 var(--shadow), inset -1px -1px 0 #cccccc;
 }
 
-.option-button:last-child {
-    border-top-right-radius: 4px;
-    border-bottom-right-radius: 4px;
-}
-
-.option-button:not(:last-child) {
-    border-right: none;
+.button-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 0 0 12px;
 }
 
 .button-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 6px;
-    margin: 10px 0;
+    gap: 4px;
 }
 
-.button-grid .option-button {
-    padding: 8px 6px;
-    border: 1px solid var(--border);
+/* Pop-up menus */
+select {
+    -webkit-appearance: none;
+    appearance: none;
+    max-width: 100%;
+    min-height: 22px;
+    padding: 2px 30px 2px 8px;
+    color: #000000;
+    border: 1px solid var(--outline);
     border-radius: 4px;
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5'%3E%3Cpath d='M0 0h9L4.5 5z'/%3E%3C/svg%3E") no-repeat right 7px center,
+        linear-gradient(var(--shadow), var(--shadow)) no-repeat right 22px center / 1px 70%,
+        linear-gradient(var(--highlight), var(--highlight)) no-repeat right 21px center / 1px 70%,
+        var(--platinum);
+    box-shadow: var(--raised);
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
 }
 
-.option-button:focus-visible {
-    position: relative;
-    z-index: 1;
+/* Effects chain */
+.effect-chain {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-/* Tablets and smaller: stack the panels */
+.effect {
+    padding: 8px 10px 10px;
+    background: var(--platinum);
+    border: 1px solid var(--shadow-dark);
+    box-shadow: var(--raised);
+}
+
+.effect-header {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.effect-index {
+    flex: none;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    background: var(--platinum-light);
+    border: 1px solid var(--shadow-dark);
+    box-shadow: var(--sunken);
+    font-size: 11px;
+    line-height: 16px;
+    text-align: center;
+}
+
+.effect-name {
+    flex: 1;
+    min-width: 0;
+    margin: 0 0 0 4px;
+    font-size: 12px;
+    font-weight: normal;
+}
+
+.effect-category {
+    color: var(--text-muted);
+    font: 11px var(--font-small);
+}
+
+/* The on/off toggle is drawn as a checkbox */
+.effect-power {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    min-height: 0;
+    padding: 2px 6px 2px 2px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.effect-power:active {
+    background: none;
+    box-shadow: none;
+}
+
+.led {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    background: linear-gradient(135deg, var(--highlight), var(--platinum));
+    border: 1px solid var(--outline);
+    box-shadow: inset -1px -1px 0 var(--shadow);
+}
+
+.effect-power[aria-pressed="true"] .led {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M1.5 5l2.5 2.5L8.5 2' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") no-repeat center / 9px 9px,
+        linear-gradient(135deg, var(--highlight), var(--platinum));
+}
+
+.effect-power:active .led {
+    background-color: var(--shadow);
+    box-shadow: var(--pressed);
+}
+
+.icon-button {
+    min-width: 24px;
+    min-height: 20px;
+    padding: 1px 5px;
+}
+
+.effect.bypassed .effect-params {
+    opacity: 0.5;
+}
+
+.effect-params {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 6px 20px;
+    margin-top: 10px;
+}
+
+.param label {
+    margin: 0;
+}
+
+.param .slider {
+    margin-top: 4px;
+}
+
+.param select {
+    width: 100%;
+    margin: 4px 0 2px;
+}
+
+.effects-empty {
+    margin: 4px 0;
+    color: var(--text-muted);
+    font: italic 11px var(--font-small);
+}
+
+.effects-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 12px 20px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--shadow);
+    box-shadow: inset 0 1px 0 var(--highlight);
+}
+
+.toolbar-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.toolbar-group label {
+    flex-basis: 100%;
+    margin-bottom: 0;
+}
+
+#clearEffects {
+    margin-left: auto;
+}
+
+/* Scroll bars with a ridged lavender thumb (Firefox gets the colors) */
+::-webkit-scrollbar {
+    width: 16px;
+    height: 16px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--platinum-dark);
+    box-shadow: inset 1px 1px 0 var(--shadow-dark), inset 2px 2px 0 var(--shadow);
+}
+
+::-webkit-scrollbar-thumb {
+    background:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 .5h8M0 3.5h8M0 6.5h8' stroke='%23fff'/%3E%3Cpath d='M0 1.5h8M0 4.5h8M0 7.5h8' stroke='%2366a'/%3E%3C/svg%3E") no-repeat center,
+        var(--accent-light);
+    border: 1px solid var(--outline);
+    box-shadow: inset 1px 1px 0 var(--highlight), inset -1px -1px 0 var(--accent);
+}
+
+@supports not selector(::-webkit-scrollbar) {
+    html {
+        scrollbar-color: var(--accent) var(--platinum-dark);
+    }
+}
+
+/* Tablets and smaller: stack the group boxes */
 @media (max-width: 900px) {
     .container {
-        flex-direction: column;
-        padding: 12px;
-    }
-
-    .control-group {
-        padding: 16px;
+        grid-template-columns: 1fr;
+        row-gap: 28px;
     }
 
     #resetSettings {
-        margin-top: 0;
+        margin-top: 16px;
     }
 }
 
-/* Phones: bigger touch targets, full-width controls */
+/* Phones: bigger touch targets */
 @media (max-width: 480px) {
-    body {
-        padding: 10px;
+    .desktop {
+        gap: 14px;
+        padding: 12px 8px 24px;
     }
 
-    .window-titlebar {
-        height: 30px;
-    }
-
-    .window-title {
-        font-size: 16px;
-    }
-
-    .control {
-        width: 14px;
-        height: 14px;
+    .window-body {
+        padding: 12px 10px;
     }
 
     .container {
-        padding: 8px;
-        gap: 12px;
+        padding-top: 22px;
     }
 
     .control-group {
-        padding: 12px;
+        padding: 16px 10px 12px;
     }
 
-    h2 {
-        font-size: 18px;
-        margin-bottom: 12px;
+    .title-bar {
+        height: 28px;
+    }
+
+    .title-box {
+        width: 19px;
+        height: 19px;
+    }
+
+    .collapse-box::after {
+        top: 5px;
+        left: 2px;
+        right: 2px;
+        height: 7px;
     }
 
     label,
     .label {
-        font-size: 16px;
-        margin-bottom: 8px;
+        font-size: 14px;
     }
 
-    .button-group {
-        flex-wrap: wrap;
-        gap: 4px;
+    .param label {
+        font-size: 13px;
     }
 
-    .button-grid .option-button {
-        padding: 10px 6px;
+    button,
+    select {
+        min-height: 36px;
+        font-size: 14px;
     }
 
-    .button-group .option-button,
-    .button-group .option-button:not(:last-child) {
+    .option-button {
+        min-height: 40px;
+    }
+
+    .button-group .option-button {
         flex: 1 0 auto;
         min-width: 70px;
-        padding: 10px 12px;
-        border: 1px solid var(--border);
-        border-radius: 4px;
     }
 
     .slider {
-        height: 20px;
+        height: 30px;
+    }
+
+    .slider::-webkit-slider-runnable-track {
+        height: 8px;
+    }
+
+    .slider::-moz-range-track {
+        height: 8px;
     }
 
     .slider::-webkit-slider-thumb {
-        width: 24px;
-        height: 24px;
+        width: 15px;
+        height: 23px;
+        margin-top: -8px;
     }
 
     .slider::-moz-range-thumb {
-        width: 24px;
-        height: 24px;
-    }
-
-    button {
-        font-size: 16px;
-        padding: 12px 18px;
+        width: 15px;
+        height: 23px;
     }
 
     #noiseToggle {
         align-self: stretch;
-        margin-top: 20px;
-        padding: 14px;
+        margin: 20px 5px 6px;
     }
 
     .hint {
         display: none;
+    }
+
+    /* Effect name on its own row, buttons right-aligned below it */
+    .effect-header {
+        flex-wrap: wrap;
+    }
+
+    .effect-name {
+        flex-basis: calc(100% - 32px);
+    }
+
+    .effect-power {
+        margin-left: auto;
+    }
+
+    .effect-header button {
+        min-height: 34px;
+        padding: 4px 10px;
+    }
+
+    .toolbar-group select {
+        flex: 1;
+    }
+
+    #clearEffects {
+        margin-left: 0;
     }
 }
 
