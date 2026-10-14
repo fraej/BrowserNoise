@@ -152,6 +152,7 @@ const selectSound = setupButtonGroup('sound', settings.sound, value => {
     switchSound(value);
     settings.sound = value;
     saveSettings();
+    updateMenuStatus();
 });
 
 // Volume (the bottom of the range mutes completely)
@@ -209,6 +210,7 @@ document.getElementById('resetSettings').addEventListener('click', () => {
     applyVolume(settings.volume);
 
     selectSound(settings.sound);
+    updateMenuStatus();
     selectFilterType(settings.filterType);
     setVolume(settings.volume);
     setFreqSlider(freqToSlider(settings.frequency));
@@ -237,6 +239,7 @@ async function toggleNoise() {
     noiseToggle.textContent = isPlaying ? 'Stop' : 'Play';
     noiseToggle.classList.toggle('active', isPlaying);
     noiseToggle.setAttribute('aria-pressed', isPlaying);
+    updateMenuStatus();
 }
 
 noiseToggle.addEventListener('click', toggleNoise);
@@ -249,3 +252,34 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
     toggleNoise();
 });
+
+// Menu bar: what's playing, and a clock
+const menuStatus = document.getElementById('menuStatus');
+const menuClock = document.getElementById('menuClock');
+
+function updateMenuStatus() {
+    const soundButton = document.querySelector(`#sound [data-value="${settings.sound}"]`);
+    menuStatus.textContent = isPlaying ? `♪ ${soundButton.textContent}` : '';
+}
+
+function updateClock() {
+    menuClock.textContent = new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+}
+updateClock();
+setInterval(updateClock, 10000);
+
+// A window's collapse box rolls it up to its title bar, like Mac OS 8's
+// windowshade; double-clicking the title bar does the same
+for (const windowElement of document.querySelectorAll('.window')) {
+    const collapseBox = windowElement.querySelector('.collapse-box');
+    const toggleCollapsed = () => {
+        const collapsed = windowElement.classList.toggle('collapsed');
+        collapseBox.setAttribute('aria-expanded', !collapsed);
+    };
+    collapseBox.addEventListener('click', toggleCollapsed);
+    windowElement.querySelector('.title-bar').addEventListener('dblclick', event => {
+        if (event.target !== collapseBox) {
+            toggleCollapsed();
+        }
+    });
+}
