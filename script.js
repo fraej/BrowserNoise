@@ -6,7 +6,8 @@ const DEFAULTS = {
     // The filter starts fully open so presets are heard as designed
     filterType: 'lowpass',
     frequency: 20000,
-    q: 0.7
+    q: 0.7,
+    effects: []
 };
 
 const MIN_FREQ = 20;
@@ -45,6 +46,10 @@ function loadSettings() {
             settings[key] = DEFAULTS[key];
         }
     }
+    settings.effects = Array.isArray(settings.effects) ? settings.effects
+        .map(sanitizeEffect)
+        .filter(state => state && isEffectAvailable(state.type))
+        .slice(0, MAX_EFFECTS) : [];
     return settings;
 }
 
@@ -58,11 +63,13 @@ function saveSettings() {
 
 const settings = loadSettings();
 
-// Audio graph: sound preset -> filter -> volume -> limiter -> speakers
-// (the limiter catches peaks from thunder or a resonant filter setting)
+// Audio graph: sound preset -> filter -> effects -> volume -> limiter -> speakers
+// (the limiter catches peaks from thunder, resonant filters or effects)
 const filter = new Tone.Filter({ type: settings.filterType, frequency: settings.frequency, Q: settings.q });
+const effectChain = new EffectChain();
 const volume = new Tone.Volume(settings.volume);
-filter.chain(volume, new Tone.Limiter(-1), Tone.Destination);
+filter.connect(effectChain.input);
+effectChain.output.chain(volume, new Tone.Limiter(-1), Tone.Destination);
 
 let sound = createSound(settings.sound, filter);
 let isPlaying = false;
@@ -124,6 +131,8 @@ function setupSlider(sliderId, outputId, initialValue, format, onInput) {
     const update = () => {
         const value = parseFloat(slider.value);
         output.textContent = format(value);
+        // Screen readers announce this rather than the raw slider position
+        slider.setAttribute('aria-valuetext', output.textContent);
         return value;
     };
     slider.addEventListener('input', () => onInput(update()));
@@ -186,12 +195,12 @@ const setQ = setupSlider('filterQ', 'qValue', settings.q, value => value.toFixed
     saveSettings();
 });
 
-// Reset everything to defaults
+// Reset sound, volume and filter to defaults (effects have their own Clear)
 document.getElementById('resetSettings').addEventListener('click', () => {
     if (settings.sound !== DEFAULTS.sound) {
         switchSound(DEFAULTS.sound);
     }
-    Object.assign(settings, DEFAULTS);
+    Object.assign(settings, DEFAULTS, { effects: settings.effects });
     saveSettings();
 
     filter.type = settings.filterType;
@@ -232,9 +241,9 @@ async function toggleNoise() {
 
 noiseToggle.addEventListener('click', toggleNoise);
 
-// Space toggles playback, unless a button has focus (it handles Space itself)
+// Space toggles playback, unless a button or menu has focus (they use Space)
 document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.target.closest('button')) {
+    if (e.code !== 'Space' || e.repeat || e.target.closest('button, select')) {
         return;
     }
     e.preventDefault();
